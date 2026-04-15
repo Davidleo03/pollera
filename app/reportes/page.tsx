@@ -149,7 +149,7 @@ ${workers.map(w => {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-neutral-dark">Reportes y Supervisión</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-neutral-dark">Reportes y Supervisión</h1>
               <p className="text-neutral-medium-gray mt-1">Análisis consolidado del sistema</p>
             </div>
             <button
@@ -162,7 +162,7 @@ ${workers.map(w => {
           </div>
 
           {/* Key Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {stats.map((stat) => {
               const Icon = stat.icon;
               return (
@@ -182,7 +182,7 @@ ${workers.map(w => {
           </div>
 
           {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
             {/* Attendance Status */}
             <Card className="p-6">
               <h2 className="text-xl font-bold text-neutral-dark mb-4">Estado de Asistencia</h2>

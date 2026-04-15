@@ -50,10 +50,10 @@ export default function Home() {
     <div className="flex">
       <Sidebar />
       <MainLayout>
-        <div className="space-y-8">
+        <div className="space-y-6 md:space-y-8">
           {/* Header */}
           <div>
-            <h1 className="text-4xl font-bold text-neutral-dark text-balance">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-neutral-dark text-balance">
               Bienvenido al Sistema Administrativo
             </h1>
             <p className="text-neutral-medium-gray mt-2">
@@ -67,7 +67,7 @@ export default function Home() {
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {stats.map((stat) => {
               const Icon = stat.icon;
               return (
@@ -91,7 +91,7 @@ export default function Home() {
           </div>
 
           {/* Recent Activity */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 md:gap-8">
             {/* Recent Workers */}
             <Card className="p-6">
               <h2 className="text-xl font-bold text-neutral-dark mb-4 flex items-center gap-2">

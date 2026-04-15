@@ -71,7 +71,7 @@ export default function AsistenciaPage() {
         <div className="space-y-6">
           {/* Header */}
           <div>
-            <h1 className="text-3xl font-bold text-neutral-dark">Control de Asistencia y Rotación</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-neutral-dark">Control de Asistencia y Rotación</h1>
             <p className="text-neutral-medium-gray mt-1">Registra entrada/salida y gestiona el sistema rotativo de días libres</p>
           </div>
 
@@ -109,7 +109,7 @@ export default function AsistenciaPage() {
           />
 
           {/* Summary Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
             <Card className="p-4 text-center border-l-4 border-l-primary">
               <p className="text-neutral-medium-gray text-xs font-medium">Activos</p>
               <p className="text-2xl font-bold text-primary mt-1">{workers.filter(w => w.estado === 'Activo').length}</p>

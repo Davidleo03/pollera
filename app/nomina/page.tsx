@@ -73,7 +73,7 @@ export default function NominaPage() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-neutral-dark">Gestión de Nómina</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-neutral-dark">Gestión de Nómina</h1>
               <p className="text-neutral-medium-gray mt-1">Administra salarios y comprobantes de pago</p>
             </div>
             <Button
@@ -195,7 +195,7 @@ export default function NominaPage() {
           </Card>
 
           {/* Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Card className="p-4">
               <p className="text-neutral-medium-gray text-sm">Generadas</p>
               <p className="text-2xl font-bold text-neutral-dark mt-2">

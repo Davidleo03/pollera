@@ -137,7 +137,7 @@ export default function PersonalPage() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-neutral-dark">Gestión de Personal</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-neutral-dark">Gestión de Personal</h1>
               <p className="text-neutral-medium-gray mt-1">Administra los 24 trabajadores (12 fijos + 12 suplentes)</p>
             </div>
             <Button
@@ -166,7 +166,7 @@ export default function PersonalPage() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Card className="p-6 border-l-4 border-l-primary">
               <div className="flex items-center justify-between">
                 <div>

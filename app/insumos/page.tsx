@@ -167,7 +167,7 @@ export default function InsumosPage() {
       <MainLayout>
         <div className="space-y-6">
           <div>
-            <h1 className="text-3xl font-bold text-neutral-dark">Inventario General de Insumos y Materiales</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-neutral-dark">Inventario General de Insumos y Materiales</h1>
             <p className="text-neutral-medium-gray mt-1">
               Control de material de oficina, insumos operativos, herramientas, repuestos y equipos
             </p>
@@ -206,7 +206,7 @@ export default function InsumosPage() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <Card className="p-4 text-center border-l-4 border-l-primary">
               <p className="text-neutral-medium-gray text-xs font-medium">Total Items</p>
               <p className="text-2xl font-bold text-primary mt-1">{totalItems}</p>
