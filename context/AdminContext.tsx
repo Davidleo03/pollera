@@ -43,10 +43,64 @@ export interface Payroll {
   estado: 'Generada' | 'Procesada' | 'Pagada';
 }
 
+export type CategoriaMedicina = 'Medicamento' | 'Vacuna' | 'Multivitamínico' | 'Suplemento' | 'Aditivo';
+
+export interface Medicina {
+  id: string;
+  nombre: string;
+  categoria: CategoriaMedicina;
+  presentacion: string;
+  cantidadInicial: number;
+  cantidadActual: number;
+  unidad: string;
+  numeroLote: string;
+  fechaVencimiento: string;
+  fechaActualizacion: string;
+  observaciones?: string;
+}
+
+export interface UsoMedicina {
+  id: string;
+  medicinaId: string;
+  cantidad: number;
+  fecha: string;
+  motivo: string;
+  observaciones?: string;
+}
+
+export type CategoriaInsumo = 'Material de Oficina' | 'Insumo Operativo' | 'Herramienta' | 'Repuesto' | 'Equipo';
+
+export interface Insumo {
+  id: string;
+  nombre: string;
+  categoria: CategoriaInsumo;
+  marca?: string;
+  modelo?: string;
+  numeroLote?: string;
+  cantidadInicial: number;
+  cantidadActual: number;
+  unidad: string;
+  fechaActualizacion: string;
+  observaciones?: string;
+}
+
+export interface UsoInsumo {
+  id: string;
+  insumoId: string;
+  cantidad: number;
+  fecha: string;
+  motivo: string;
+  observaciones?: string;
+}
+
 interface AdminContextType {
   workers: Worker[];
   attendance: Attendance[];
   payroll: Payroll[];
+  medicamentos: Medicina[];
+  usosMedicamentos: UsoMedicina[];
+  insumos: Insumo[];
+  usosInsumos: UsoInsumo[];
   
   // Workers
   addWorker: (worker: Omit<Worker, 'id'>) => void;
@@ -69,6 +123,18 @@ interface AdminContextType {
   updatePayroll: (id: string, payroll: Partial<Payroll>) => void;
   getPayrollByWorker: (workerId: string) => Payroll[];
   getPayrollByMonth: (mes: string, año: number) => Payroll[];
+  
+  // Inventario de Medicinas
+  addMedicina: (medicina: Omit<Medicina, 'id'>) => void;
+  updateMedicina: (id: string, medicina: Partial<Medicina>) => void;
+  deleteMedicina: (id: string) => void;
+  registrarUsoMedicina: (uso: Omit<UsoMedicina, 'id'>) => void;
+  
+  // Inventario de Insumos
+  addInsumo: (insumo: Omit<Insumo, 'id'>) => void;
+  updateInsumo: (id: string, insumo: Partial<Insumo>) => void;
+  deleteInsumo: (id: string) => void;
+  registrarUsoInsumo: (uso: Omit<UsoInsumo, 'id'>) => void;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
@@ -77,6 +143,10 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [attendance, setAttendance] = useState<Attendance[]>([]);
   const [payroll, setPayroll] = useState<Payroll[]>([]);
+  const [medicamentos, setMedicamentos] = useState<Medicina[]>([]);
+  const [usosMedicamentos, setUsosMedicamentos] = useState<UsoMedicina[]>([]);
+  const [insumos, setInsumos] = useState<Insumo[]>([]);
+  const [usosInsumos, setUsosInsumos] = useState<UsoInsumo[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Inicializar datos desde localStorage
@@ -85,10 +155,18 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       const storedWorkers = localStorage.getItem('workers');
       const storedAttendance = localStorage.getItem('attendance');
       const storedPayroll = localStorage.getItem('payroll');
+      const storedMedicamentos = localStorage.getItem('medicamentos');
+      const storedUsosMedicamentos = localStorage.getItem('usosMedicamentos');
+      const storedInsumos = localStorage.getItem('insumos');
+      const storedUsosInsumos = localStorage.getItem('usosInsumos');
       
       if (storedWorkers) setWorkers(JSON.parse(storedWorkers));
       if (storedAttendance) setAttendance(JSON.parse(storedAttendance));
       if (storedPayroll) setPayroll(JSON.parse(storedPayroll));
+      if (storedMedicamentos) setMedicamentos(JSON.parse(storedMedicamentos));
+      if (storedUsosMedicamentos) setUsosMedicamentos(JSON.parse(storedUsosMedicamentos));
+      if (storedInsumos) setInsumos(JSON.parse(storedInsumos));
+      if (storedUsosInsumos) setUsosInsumos(JSON.parse(storedUsosInsumos));
       
       setIsInitialized(true);
     }
@@ -114,6 +192,34 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('payroll', JSON.stringify(payroll));
     }
   }, [payroll, isInitialized]);
+
+  // Guardar medicamentos
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isInitialized) {
+      localStorage.setItem('medicamentos', JSON.stringify(medicamentos));
+    }
+  }, [medicamentos, isInitialized]);
+
+  // Guardar usos de medicamentos
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isInitialized) {
+      localStorage.setItem('usosMedicamentos', JSON.stringify(usosMedicamentos));
+    }
+  }, [usosMedicamentos, isInitialized]);
+
+  // Guardar insumos
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isInitialized) {
+      localStorage.setItem('insumos', JSON.stringify(insumos));
+    }
+  }, [insumos, isInitialized]);
+
+  // Guardar usos de insumos
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isInitialized) {
+      localStorage.setItem('usosInsumos', JSON.stringify(usosInsumos));
+    }
+  }, [usosInsumos, isInitialized]);
 
   // Workers functions
   const addWorker = (worker: Omit<Worker, 'id'>) => {
@@ -238,10 +344,82 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     return payroll.filter(p => p.mes === mes && p.año === año);
   };
 
+  // Inventario de Medicinas functions
+  const addMedicina = (medicina: Omit<Medicina, 'id'>) => {
+    const newMedicina: Medicina = {
+      ...medicina,
+      id: `M-${Date.now()}`,
+    };
+    setMedicamentos([...medicamentos, newMedicina]);
+  };
+
+  const updateMedicina = (id: string, updates: Partial<Medicina>) => {
+    setMedicamentos(medicamentos.map(m => m.id === id ? { ...m, ...updates } : m));
+  };
+
+  const deleteMedicina = (id: string) => {
+    setMedicamentos(medicamentos.filter(m => m.id !== id));
+  };
+
+  const registrarUsoMedicina = (uso: Omit<UsoMedicina, 'id'>) => {
+    const newUso: UsoMedicina = {
+      ...uso,
+      id: `UM-${Date.now()}`,
+    };
+    setUsosMedicamentos([...usosMedicamentos, newUso]);
+    
+    const medicina = medicamentos.find(m => m.id === uso.medicinaId);
+    if (medicina) {
+      const nuevaCantidad = medicina.cantidadActual - uso.cantidad;
+      updateMedicina(uso.medicinaId, {
+        cantidadActual: Math.max(0, nuevaCantidad),
+        fechaActualizacion: new Date().toISOString().split('T')[0],
+      });
+    }
+  };
+
+  // Inventario de Insumos functions
+  const addInsumo = (insumo: Omit<Insumo, 'id'>) => {
+    const newInsumo: Insumo = {
+      ...insumo,
+      id: `I-${Date.now()}`,
+    };
+    setInsumos([...insumos, newInsumo]);
+  };
+
+  const updateInsumo = (id: string, updates: Partial<Insumo>) => {
+    setInsumos(insumos.map(i => i.id === id ? { ...i, ...updates } : i));
+  };
+
+  const deleteInsumo = (id: string) => {
+    setInsumos(insumos.filter(i => i.id !== id));
+  };
+
+  const registrarUsoInsumo = (uso: Omit<UsoInsumo, 'id'>) => {
+    const newUso: UsoInsumo = {
+      ...uso,
+      id: `UI-${Date.now()}`,
+    };
+    setUsosInsumos([...usosInsumos, newUso]);
+    
+    const insumo = insumos.find(i => i.id === uso.insumoId);
+    if (insumo) {
+      const nuevaCantidad = insumo.cantidadActual - uso.cantidad;
+      updateInsumo(uso.insumoId, {
+        cantidadActual: Math.max(0, nuevaCantidad),
+        fechaActualizacion: new Date().toISOString().split('T')[0],
+      });
+    }
+  };
+
   const value: AdminContextType = {
     workers,
     attendance,
     payroll,
+    medicamentos,
+    usosMedicamentos,
+    insumos,
+    usosInsumos,
     addWorker,
     updateWorker,
     deleteWorker,
@@ -258,6 +436,14 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     updatePayroll,
     getPayrollByWorker,
     getPayrollByMonth,
+    addMedicina,
+    updateMedicina,
+    deleteMedicina,
+    registrarUsoMedicina,
+    addInsumo,
+    updateInsumo,
+    deleteInsumo,
+    registrarUsoInsumo,
   };
 
   return (

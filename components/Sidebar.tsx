@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Users, Clock, FileText, BarChart3, Home } from 'lucide-react';
+import { Users, Clock, FileText, BarChart3, Home, Pill, Package } from 'lucide-react';
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -28,6 +28,16 @@ export function Sidebar() {
       label: 'Nómina',
       href: '/nomina',
       icon: FileText,
+    },
+    {
+      label: 'Medicinas',
+      href: '/medicinas',
+      icon: Pill,
+    },
+    {
+      label: 'Insumos',
+      href: '/insumos',
+      icon: Package,
     },
     {
       label: 'Reportes',
