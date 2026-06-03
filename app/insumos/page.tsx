@@ -7,7 +7,7 @@ import { useAdmin, CategoriaInsumo } from '@/context/AdminContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, AlertTriangle, Package, Trash2, Edit, Save, X, MinusCircle } from 'lucide-react';
+import { Plus, Search, AlertTriangle, Package, Trash2, Edit, Save, X, MinusCircle, Download } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -161,6 +161,48 @@ export default function InsumosPage() {
     return 'text-status-success';
   };
 
+  const descargarInventario = () => {
+    const header = [
+      'Nombre',
+      'Categoría',
+      'Marca',
+      'Modelo',
+      'Número de Lote',
+      'Cantidad Inicial',
+      'Cantidad Actual',
+      'Unidad',
+      'Observaciones',
+      'Última Actualización',
+    ];
+
+    const rows = insumos.map((insumo) => [
+      insumo.nombre,
+      insumo.categoria,
+      insumo.marca || '',
+      insumo.modelo || '',
+      insumo.numeroLote || '',
+      insumo.cantidadInicial.toString(),
+      insumo.cantidadActual.toString(),
+      insumo.unidad,
+      insumo.observaciones || '',
+      insumo.fechaActualizacion || '',
+    ]);
+
+    const csvContent = [header, ...rows]
+      .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(','))
+      .join('\r\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `inventario-insumos-${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex h-screen bg-neutral-light-gray">
       <Sidebar />
@@ -197,6 +239,14 @@ export default function InsumosPage() {
                 ))}
               </SelectContent>
             </Select>
+            <Button
+              onClick={descargarInventario}
+              variant="outline"
+              className="border-neutral-medium-gray text-neutral-dark hover:bg-neutral-light-gray"
+            >
+              <Download size={18} className="mr-2" />
+              Descargar
+            </Button>
             <Button
               onClick={() => { resetForm(); setShowModal(true); }}
               className="bg-primary hover:bg-primary/80 text-white"
