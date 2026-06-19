@@ -2,14 +2,17 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Users, Clock, FileText, BarChart3, Home, Pill, Package, Menu, X } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/context/AuthContext';
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
+  const { logout } = useAuth();
 
   const menuItems = [
     { label: 'Inicio', href: '/', icon: Home },
@@ -19,6 +22,7 @@ export function Sidebar() {
     { label: 'Medicinas', href: '/medicinas', icon: Pill },
     { label: 'Insumos', href: '/insumos', icon: Package },
     { label: 'Reportes', href: '/reportes', icon: BarChart3 },
+    { label: 'Salir', action: 'logout', icon: X },
   ];
 
   const handleLinkClick = () => {
@@ -46,11 +50,29 @@ export function Sidebar() {
       <nav className={`flex-1 p-4 ${isMobile ? 'space-y-2' : 'space-y-2'}`}>
         {menuItems.map((item) => {
           const Icon = item.icon;
+          if (item.action === 'logout') {
+            return (
+              <button
+                key="logout"
+                type="button"
+                onClick={() => {
+                  logout();
+                  router.push('/login');
+                  if (isMobile) setIsOpen(false);
+                }}
+                className="w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-sidebar-foreground hover:bg-primary-burgundy-light hover:text-white"
+              >
+                <Icon size={20} />
+                <span>{item.label}</span>
+              </button>
+            );
+          }
+
           const isActive = pathname === item.href;
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={item.href!}
               onClick={handleLinkClick}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                 isActive

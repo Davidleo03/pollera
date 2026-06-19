@@ -123,3 +123,80 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Mobile-friendly global tweaks */
+@media (max-width: 767px) {
+  /* Reduce card paddings and make them flush on small screens */
+  .card-responsive {
+    padding: 0.75rem !important;
+    border-radius: 0 !important;
+  }
+
+  /* Tables: smaller padding, wrap long text */
+  .table-responsive th,
+  .table-responsive td {
+    padding: 0.5rem !important;
+    font-size: 0.92rem !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+  }
+
+  /* Modals: make full-width and top aligned */
+  .modal-card {
+    border-radius: 0 !important;
+    margin-top: 0.5rem !important;
+    max-width: 100% !important;
+  }
+
+  /* Reduce table header font size */
+  .table-responsive thead th {
+    font-size: 0.85rem !important;
+  }
+
+  /* Buttons and inputs full width in stacked layouts */
+  .stack-full > * {
+    width: 100% !important;
+  }
+}
+
+/* Mobile: transform table to stacked cards with labels */
+@media (max-width: 767px) {
+  .table-responsive thead {
+    display: none;
+  }
+
+  .table-responsive tbody tr {
+    display: block;
+    margin-bottom: 0.75rem;
+    background: var(--card);
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .table-responsive tbody tr td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.25rem !important;
+    border: none !important;
+  }
+
+  .table-responsive tbody tr td::before {
+    content: attr(data-label);
+    display: inline-block;
+    color: var(--muted-foreground);
+    font-size: 0.85rem;
+    margin-right: 0.5rem;
+    width: 48%;
+    font-weight: 600;
+  }
+
+  .table-responsive tbody tr td > * {
+    width: 52%;
+    text-align: right;
+  }
+
+  .table-responsive tbody tr td .flex {
+    justify-content: flex-end;
+  }
+}

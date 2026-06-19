@@ -219,7 +219,7 @@ export default function MedicinasPage() {
 
           <Card className="overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-responsive">
                 <thead className="bg-primary text-white">
                   <tr>
                     <th className="px-4 py-3 text-left font-semibold">Nombre</th>

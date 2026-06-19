@@ -16,58 +16,48 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-const categoriasInsumos: CategoriaInsumo[] = ['Material de Oficina', 'Insumo Operativo', 'Herramienta', 'Repuesto', 'Equipo'];
+const getCategoriaColor = (categoria: CategoriaInsumo) => {
+  switch (categoria) {
+    case 'Material de Oficina': return 'bg-primary/20 text-primary';
+    case 'Insumo Operativo': return 'bg-secondary-green/20 text-secondary-green';
+    case 'Herramienta': return 'bg-status-warning/20 text-status-warning';
+    case 'Repuesto': return 'bg-status-error/20 text-status-error';
+    case 'Equipo': return 'bg-neutral-medium-gray/20 text-neutral-medium-gray';
+    default: return 'bg-neutral-light-gray text-neutral-dark';
+  }
+};
 
-export default function InsumosPage() {
+export default function Page() {
   const { insumos, addInsumo, updateInsumo, deleteInsumo, registrarUsoInsumo } = useAdmin();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterCategoria, setFilterCategoria] = useState<CategoriaInsumo | 'all'>('all');
+  const [filterCategoria, setFilterCategoria] = useState<'all' | CategoriaInsumo>('all');
+  const categoriasInsumos = useMemo(() => ['Material de Oficina', 'Insumo Operativo', 'Herramienta', 'Repuesto', 'Equipo'] as CategoriaInsumo[], []);
   const [showModal, setShowModal] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [showUsoModal, setShowUsoModal] = useState(false);
-  const [selectedInsumoId, setSelectedInsumoId] = useState<string | null>(null);
-  
   const [formData, setFormData] = useState({
     nombre: '',
     categoria: 'Insumo Operativo' as CategoriaInsumo,
     marca: '',
     modelo: '',
     numeroLote: '',
-    cantidadInicial: 0,
-    cantidadActual: 0,
+    cantidadInicial: '',
+    cantidadActual: '',
     unidad: '',
     observaciones: '',
   });
-  
-  const [usoData, setUsoData] = useState({
-    cantidad: 1,
-    motivo: '',
-    observaciones: '',
-  });
-
-  const filteredInsumos = useMemo(() => {
-    return insumos.filter(i => {
-      const matchesSearch = i.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (i.marca && i.marca.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (i.numeroLote && i.numeroLote.toLowerCase().includes(searchTerm.toLowerCase()));
-      const matchesCategoria = filterCategoria === 'all' || i.categoria === filterCategoria;
-      return matchesSearch && matchesCategoria;
-    });
-  }, [insumos, searchTerm, filterCategoria]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedInsumoId, setSelectedInsumoId] = useState<string | null>(null);
+  const [usoData, setUsoData] = useState({ cantidad: 1, motivo: 'Uso', observaciones: '' });
+  const [showUsoModal, setShowUsoModal] = useState(false);
 
   const totalItems = insumos.length;
-  const stockBajo = insumos.filter(i => i.cantidadActual <= i.cantidadInicial * 0.2 && i.cantidadInicial > 0).length;
-  
-  const getCategoriaColor = (categoria: CategoriaInsumo) => {
-    switch (categoria) {
-      case 'Material de Oficina': return 'bg-primary/20 text-primary';
-      case 'Insumo Operativo': return 'bg-secondary-green/20 text-secondary-green';
-      case 'Herramienta': return 'bg-status-warning/20 text-status-warning';
-      case 'Repuesto': return 'bg-status-error/20 text-status-error';
-      case 'Equipo': return 'bg-neutral-medium-gray/20 text-neutral-medium-gray';
-      default: return 'bg-neutral-light-gray text-neutral-dark';
-    }
-  };
+  const stockBajo = insumos.filter(i => i.cantidadInicial > 0 && i.cantidadActual <= i.cantidadInicial * 0.2).length;
+
+  const filteredInsumos = insumos.filter(i => {
+    const matchesCategoria = filterCategoria === 'all' || i.categoria === filterCategoria;
+    const q = searchTerm.trim().toLowerCase();
+    const matchesSearch = !q || i.nombre.toLowerCase().includes(q) || (i.marca || '').toLowerCase().includes(q) || (i.numeroLote || '').toLowerCase().includes(q);
+    return matchesCategoria && matchesSearch;
+  });
 
   const resetForm = () => {
     setFormData({
@@ -76,8 +66,8 @@ export default function InsumosPage() {
       marca: '',
       modelo: '',
       numeroLote: '',
-      cantidadInicial: 0,
-      cantidadActual: 0,
+      cantidadInicial: '',
+      cantidadActual: '',
       unidad: '',
       observaciones: '',
     });
@@ -87,20 +77,21 @@ export default function InsumosPage() {
   const handleSubmit = () => {
     if (!formData.nombre.trim() || !formData.categoria || !formData.unidad) return;
     
+    const cantidadInicial = parseInt(formData.cantidadInicial, 10) || 0;
+    const cantidadActual = parseInt(formData.cantidadActual, 10) || 0;
     const today = new Date().toISOString().split('T')[0];
     
+    const payload = {
+      ...formData,
+      cantidadInicial,
+      cantidadActual,
+      fechaActualizacion: today,
+    } as const;
+
     if (editingId) {
-      updateInsumo(editingId, {
-        ...formData,
-        fechaActualizacion: today,
-      });
+      updateInsumo(editingId, payload);
     } else {
-      addInsumo({
-        ...formData,
-        cantidadInicial: formData.cantidadInicial || formData.cantidadActual,
-        cantidadActual: formData.cantidadActual || formData.cantidadInicial,
-        fechaActualizacion: today,
-      });
+      addInsumo(payload);
     }
     
     setShowModal(false);
@@ -114,8 +105,8 @@ export default function InsumosPage() {
       marca: ins.marca || '',
       modelo: ins.modelo || '',
       numeroLote: ins.numeroLote || '',
-      cantidadInicial: ins.cantidadInicial,
-      cantidadActual: ins.cantidadActual,
+      cantidadInicial: ins.cantidadInicial.toString(),
+      cantidadActual: ins.cantidadActual.toString(),
       unidad: ins.unidad,
       observaciones: ins.observaciones || '',
     });
@@ -161,7 +152,7 @@ export default function InsumosPage() {
     return 'text-status-success';
   };
 
-  const descargarInventario = () => {
+  const descargarInventario = async () => {
     const header = [
       'Nombre',
       'Categoría',
@@ -181,26 +172,20 @@ export default function InsumosPage() {
       insumo.marca || '',
       insumo.modelo || '',
       insumo.numeroLote || '',
-      insumo.cantidadInicial.toString(),
-      insumo.cantidadActual.toString(),
+      insumo.cantidadInicial,
+      insumo.cantidadActual,
       insumo.unidad,
       insumo.observaciones || '',
       insumo.fechaActualizacion || '',
     ]);
 
-    const csvContent = [header, ...rows]
-      .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(','))
-      .join('\r\n');
+    const XLSX = await import('xlsx');
+    const worksheet = XLSX.utils.aoa_to_sheet([header, ...rows]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Insumos');
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `inventario-insumos-${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const filename = `inventario-insumos-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(workbook, filename);
   };
 
   return (
@@ -281,7 +266,7 @@ export default function InsumosPage() {
 
           <Card className="overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-responsive">
                 <thead className="bg-primary text-white">
                   <tr>
                     <th className="px-4 py-3 text-left font-semibold">Nombre</th>
@@ -443,7 +428,7 @@ export default function InsumosPage() {
                           type="number"
                           min="0"
                           value={formData.cantidadInicial}
-                          onChange={(e) => setFormData({...formData, cantidadInicial: parseInt(e.target.value) || 0})}
+                          onChange={(e) => setFormData({...formData, cantidadInicial: e.target.value})}
                         />
                       </div>
                       <div>
@@ -452,7 +437,7 @@ export default function InsumosPage() {
                           type="number"
                           min="0"
                           value={formData.cantidadActual}
-                          onChange={(e) => setFormData({...formData, cantidadActual: parseInt(e.target.value) || 0})}
+                          onChange={(e) => setFormData({...formData, cantidadActual: e.target.value})}
                         />
                       </div>
                     </div>

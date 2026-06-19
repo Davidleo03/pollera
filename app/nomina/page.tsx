@@ -15,12 +15,14 @@ export default function NominaPage() {
   const [showDetails, setShowDetails] = useState<string | null>(null);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
 
-  const currentYear = new Date().getFullYear();
-  const currentMonth = selectedMonth;
+  const [selectedYear, selectedMonthNumber] = selectedMonth.split('-');
+  const currentYear = parseInt(selectedYear, 10);
+  const currentMonth = selectedMonthNumber;
   const monthPayrolls = getPayrollByMonth(currentMonth, currentYear);
 
   const handleGeneratePayroll = () => {
-    const [year, month] = selectedMonth.split('-');
+    const year = selectedYear;
+    const month = selectedMonthNumber;
     
     workers.forEach(worker => {
       // Verificar si ya existe nómina para este mes
@@ -108,7 +110,7 @@ export default function NominaPage() {
           {/* Payroll List */}
           <Card className="overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-responsive">
                 <thead className="bg-primary text-white">
                   <tr>
                     <th className="px-6 py-3 text-left font-semibold">Trabajador</th>
@@ -122,7 +124,7 @@ export default function NominaPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {monthPayrolls.map((pay) => {
+                  {monthPayrolls.map((pay, i) => {
                     const worker = workers.find(w => w.id === pay.workerId);
                     if (!worker) return null;
                     
@@ -218,8 +220,8 @@ export default function NominaPage() {
 
           {/* Generate Modal */}
           {showGenerateModal && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <Card className="w-full max-w-md p-6">
+            <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4">
+              <Card className="w-full max-w-full sm:max-w-md md:max-w-lg p-6 rounded-none sm:rounded-lg">
                 <h2 className="text-2xl font-bold text-neutral-dark mb-4">Generar Nóminas</h2>
                 <p className="text-neutral-medium-gray mb-6">
                   ¿Deseas generar nóminas para {new Date(selectedMonth).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}?
@@ -248,8 +250,8 @@ export default function NominaPage() {
 
           {/* Details Modal */}
           {detailedPayroll && detailedWorker && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <Card className="w-full max-w-md p-6">
+            <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4">
+              <Card className="w-full max-w-full sm:max-w-md md:max-w-lg p-6 rounded-none sm:rounded-lg">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-neutral-dark">Comprobante de Pago</h2>
                   <button

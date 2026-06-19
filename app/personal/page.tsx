@@ -9,6 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, X, Users, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
+type WorkerFormData = Omit<Worker, 'id' | 'salarioBase'> & {
+  salarioBase: string;
+};
+
 export default function PersonalPage() {
   const { workers, addWorker, updateWorker, deleteWorker } = useAdmin();
   const [showModal, setShowModal] = useState(false);
@@ -16,7 +20,7 @@ export default function PersonalPage() {
   const [activeTab, setActiveTab] = useState<'Fijo' | 'Suplente'>('Fijo');
   const [searchTerm, setSearchTerm] = useState('');
   
-  const [formData, setFormData] = useState<Omit<Worker, 'id'>>({
+  const [formData, setFormData] = useState<WorkerFormData>({
     nombre: '',
     apellido: '',
     cedula: '',
@@ -24,7 +28,7 @@ export default function PersonalPage() {
     tipoContrato: 'Fijo',
     galpones: [],
     estado: 'Activo',
-    salarioBase: 0,
+    salarioBase: '',
     fechaIngreso: new Date().toISOString().split('T')[0],
     diasLibreRotacion: [],
     disponibilidad: 'Disponible',
@@ -57,6 +61,8 @@ export default function PersonalPage() {
       return;
     }
 
+    const salarioBase = parseFloat(formData.salarioBase.replace(',', '.')) || 0;
+
     // Validar límite de trabajadores
     if (!editingId) {
       const currentTypeCount = workers.filter(w => w.tipoContrato === formData.tipoContrato).length;
@@ -70,11 +76,16 @@ export default function PersonalPage() {
       }
     }
 
+    const payload = {
+      ...formData,
+      salarioBase,
+    };
+
     if (editingId) {
-      updateWorker(editingId, formData);
+      updateWorker(editingId, payload);
       setEditingId(null);
     } else {
-      addWorker(formData);
+      addWorker(payload);
     }
 
     setFormData({
@@ -85,7 +96,7 @@ export default function PersonalPage() {
       tipoContrato: 'Fijo',
       galpones: [],
       estado: 'Activo',
-      salarioBase: 0,
+      salarioBase: '',
       fechaIngreso: new Date().toISOString().split('T')[0],
       diasLibreRotacion: [],
       disponibilidad: 'Disponible',
@@ -102,7 +113,7 @@ export default function PersonalPage() {
       tipoContrato: worker.tipoContrato,
       galpones: worker.galpones || [],
       estado: worker.estado,
-      salarioBase: worker.salarioBase,
+      salarioBase: worker.salarioBase.toString(),
       fechaIngreso: worker.fechaIngreso,
       diasLibreRotacion: worker.diasLibreRotacion || [],
       disponibilidad: worker.disponibilidad || 'Disponible',
@@ -151,7 +162,7 @@ export default function PersonalPage() {
                   tipoContrato: activeTab,
                   galpones: [],
                   estado: 'Activo',
-                  salarioBase: 0,
+                  salarioBase: "0",
                   fechaIngreso: new Date().toISOString().split('T')[0],
                   diasLibreRotacion: [],
                   disponibilidad: 'Disponible',
@@ -230,7 +241,7 @@ export default function PersonalPage() {
           {/* Workers Table */}
           <Card className="overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-responsive">
                 <thead className={`text-white ${activeTab === 'Fijo' ? 'bg-primary' : 'bg-secondary-green'}`}>
                   <tr>
                     <th className="px-6 py-3 text-left font-semibold">Nombre</th>
@@ -245,14 +256,14 @@ export default function PersonalPage() {
                 <tbody className="divide-y divide-border">
                   {filteredWorkers.map((worker) => (
                     <tr key={worker.id} className="hover:bg-neutral-light-gray transition-colors">
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4" data-label="Nombre">
                         <p className="font-semibold text-neutral-dark">
                           {worker.nombre} {worker.apellido}
                         </p>
                       </td>
-                      <td className="px-6 py-4 text-neutral-medium-gray">{worker.cedula}</td>
-                      <td className="px-6 py-4 text-neutral-medium-gray">{worker.rol}</td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 text-neutral-medium-gray" data-label="Cédula">{worker.cedula}</td>
+                      <td className="px-6 py-4 text-neutral-medium-gray" data-label="Rol">{worker.rol}</td>
+                      <td className="px-6 py-4" data-label="Galpones">
                         <div className="flex flex-wrap gap-1">
                           {(worker.galpones?.length ?? 0) > 0 ? (
                             worker.galpones.map((g) => (
@@ -265,7 +276,7 @@ export default function PersonalPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4" data-label="Días Libres">
                         <div className="flex flex-wrap gap-1">
                           {(worker.diasLibreRotacion?.length ?? 0) > 0 ? (
                             worker.diasLibreRotacion.map((d) => (
@@ -278,7 +289,7 @@ export default function PersonalPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4" data-label="Disponibilidad">
                         <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                           worker.disponibilidad === 'Disponible'
                             ? 'bg-status-success/20 text-status-success'
@@ -289,7 +300,7 @@ export default function PersonalPage() {
                           {worker.disponibilidad}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4" data-label="Acciones">
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleEdit(worker)}
@@ -325,8 +336,8 @@ export default function PersonalPage() {
 
           {/* Modal */}
           {showModal && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <Card className="w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4">
+              <Card className="w-full max-w-full sm:max-w-lg md:max-w-3xl max-h-[90vh] overflow-y-auto rounded-none sm:rounded-lg">
                 <div className="p-6 border-b border-border flex items-center justify-between sticky top-0 bg-white">
                   <h2 className="text-2xl font-bold text-neutral-dark">
                     {editingId ? 'Editar Trabajador' : 'Agregar Nuevo Trabajador'}
@@ -376,7 +387,7 @@ export default function PersonalPage() {
                         <Input
                           type="number"
                           value={formData.salarioBase}
-                          onChange={(e) => setFormData({ ...formData, salarioBase: parseFloat(e.target.value) || 0 })}
+                          onChange={(e) => setFormData({ ...formData, salarioBase: e.target.value })}
                           placeholder="0.00"
                         />
                       </div>

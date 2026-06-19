@@ -139,6 +139,31 @@ interface AdminContextType {
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
+const STORAGE_KEYS = {
+  workers: 'workers',
+  attendance: 'attendance',
+  payroll: 'payroll',
+  medicamentos: 'medicamentos',
+  usosMedicamentos: 'usosMedicamentos',
+  insumos: 'insumos',
+  usosInsumos: 'usosInsumos',
+} as const;
+
+function loadStorage<T>(key: string, fallback: T): T {
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? (JSON.parse(stored) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function saveStorage<T>(key: string, value: T) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
 export function AdminProvider({ children }: { children: React.ReactNode }) {
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [attendance, setAttendance] = useState<Attendance[]>([]);
@@ -151,75 +176,72 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
 
   // Inicializar datos desde localStorage
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedWorkers = localStorage.getItem('workers');
-      const storedAttendance = localStorage.getItem('attendance');
-      const storedPayroll = localStorage.getItem('payroll');
-      const storedMedicamentos = localStorage.getItem('medicamentos');
-      const storedUsosMedicamentos = localStorage.getItem('usosMedicamentos');
-      const storedInsumos = localStorage.getItem('insumos');
-      const storedUsosInsumos = localStorage.getItem('usosInsumos');
-      
-      if (storedWorkers) setWorkers(JSON.parse(storedWorkers));
-      if (storedAttendance) setAttendance(JSON.parse(storedAttendance));
-      if (storedPayroll) setPayroll(JSON.parse(storedPayroll));
-      if (storedMedicamentos) setMedicamentos(JSON.parse(storedMedicamentos));
-      if (storedUsosMedicamentos) setUsosMedicamentos(JSON.parse(storedUsosMedicamentos));
-      if (storedInsumos) setInsumos(JSON.parse(storedInsumos));
-      if (storedUsosInsumos) setUsosInsumos(JSON.parse(storedUsosInsumos));
-      
-      setIsInitialized(true);
+    if (typeof window === 'undefined') return;
+    const loadedWorkers = loadStorage<Worker[]>(STORAGE_KEYS.workers, []);
+    const loadedAttendance = loadStorage<Attendance[]>(STORAGE_KEYS.attendance, []);
+    const loadedPayroll = loadStorage<Payroll[]>(STORAGE_KEYS.payroll, []);
+    const loadedMedicamentos = loadStorage<Medicina[]>(STORAGE_KEYS.medicamentos, []);
+    const loadedUsosMedicamentos = loadStorage<UsoMedicina[]>(STORAGE_KEYS.usosMedicamentos, []);
+    const loadedInsumos = loadStorage<Insumo[]>(STORAGE_KEYS.insumos, []);
+    const loadedUsosInsumos = loadStorage<UsoInsumo[]>(STORAGE_KEYS.usosInsumos, []);
+
+    const dedupeByKey = <T,>(arr: T[], keyFn: (t: T) => string) => {
+      const seen = new Set<string>();
+      return arr.filter((item) => {
+        const k = keyFn(item);
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+    };
+
+    setWorkers(loadedWorkers);
+    setAttendance(loadedAttendance);
+    // Ensure payroll IDs are unique (reassign duplicates) and deduplicate by worker-month-year
+    const makeUniqueId = (prefix: string) => {
+      if (typeof crypto !== 'undefined' && typeof (crypto as any).randomUUID === 'function') {
+        return `${prefix}-${(crypto as any).randomUUID()}`;
+      }
+      return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    };
+
+    const normalizedPayroll: Payroll[] = [];
+    const seenIds = new Set<string>();
+    for (const p of loadedPayroll) {
+      let id = p.id;
+      if (!id || seenIds.has(id)) {
+        // assign a fresh unique id when missing or duplicate
+        let newId: string;
+        do {
+          newId = makeUniqueId('P');
+        } while (seenIds.has(newId));
+        id = newId;
+        // eslint-disable-next-line no-console
+        console.warn('AdminContext: duplicate payroll id detected. Reassigning id.', p);
+      }
+      normalizedPayroll.push({ ...p, id });
+      seenIds.add(id);
     }
+
+    setPayroll(dedupeByKey(normalizedPayroll, (p: Payroll) => `${p.workerId}-${p.mes}-${p.año}`));
+    setMedicamentos(loadedMedicamentos);
+    setUsosMedicamentos(loadedUsosMedicamentos);
+    setInsumos(loadedInsumos);
+    setUsosInsumos(loadedUsosInsumos);
+    setIsInitialized(true);
   }, []);
 
-  // Guardar workers
   useEffect(() => {
-    if (typeof window !== 'undefined' && isInitialized) {
-      localStorage.setItem('workers', JSON.stringify(workers));
-    }
-  }, [workers, isInitialized]);
+    if (!isInitialized || typeof window === 'undefined') return;
 
-  // Guardar attendance
-  useEffect(() => {
-    if (typeof window !== 'undefined' && isInitialized) {
-      localStorage.setItem('attendance', JSON.stringify(attendance));
-    }
-  }, [attendance, isInitialized]);
-
-  // Guardar payroll
-  useEffect(() => {
-    if (typeof window !== 'undefined' && isInitialized) {
-      localStorage.setItem('payroll', JSON.stringify(payroll));
-    }
-  }, [payroll, isInitialized]);
-
-  // Guardar medicamentos
-  useEffect(() => {
-    if (typeof window !== 'undefined' && isInitialized) {
-      localStorage.setItem('medicamentos', JSON.stringify(medicamentos));
-    }
-  }, [medicamentos, isInitialized]);
-
-  // Guardar usos de medicamentos
-  useEffect(() => {
-    if (typeof window !== 'undefined' && isInitialized) {
-      localStorage.setItem('usosMedicamentos', JSON.stringify(usosMedicamentos));
-    }
-  }, [usosMedicamentos, isInitialized]);
-
-  // Guardar insumos
-  useEffect(() => {
-    if (typeof window !== 'undefined' && isInitialized) {
-      localStorage.setItem('insumos', JSON.stringify(insumos));
-    }
-  }, [insumos, isInitialized]);
-
-  // Guardar usos de insumos
-  useEffect(() => {
-    if (typeof window !== 'undefined' && isInitialized) {
-      localStorage.setItem('usosInsumos', JSON.stringify(usosInsumos));
-    }
-  }, [usosInsumos, isInitialized]);
+    saveStorage(STORAGE_KEYS.workers, workers);
+    saveStorage(STORAGE_KEYS.attendance, attendance);
+    saveStorage(STORAGE_KEYS.payroll, payroll);
+    saveStorage(STORAGE_KEYS.medicamentos, medicamentos);
+    saveStorage(STORAGE_KEYS.usosMedicamentos, usosMedicamentos);
+    saveStorage(STORAGE_KEYS.insumos, insumos);
+    saveStorage(STORAGE_KEYS.usosInsumos, usosInsumos);
+  }, [workers, attendance, payroll, medicamentos, usosMedicamentos, insumos, usosInsumos, isInitialized]);
 
   // Workers functions
   const addWorker = (worker: Omit<Worker, 'id'>) => {
@@ -227,15 +249,15 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       ...worker,
       id: `W-${Date.now()}`,
     };
-    setWorkers([...workers, newWorker]);
+    setWorkers((prev) => [...prev, newWorker]);
   };
 
   const updateWorker = (id: string, updates: Partial<Worker>) => {
-    setWorkers(workers.map(w => w.id === id ? { ...w, ...updates } : w));
+    setWorkers((prev) => prev.map(w => w.id === id ? { ...w, ...updates } : w));
   };
 
   const deleteWorker = (id: string) => {
-    setWorkers(workers.filter(w => w.id !== id));
+    setWorkers((prev) => prev.filter(w => w.id !== id));
   };
 
   const getWorker = (id: string) => {
@@ -263,11 +285,11 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       ...att,
       id: `A-${Date.now()}`,
     };
-    setAttendance([...attendance, newAttendance]);
+    setAttendance((prev) => [...prev, newAttendance]);
   };
 
   const updateAttendance = (id: string, updates: Partial<Attendance>) => {
-    setAttendance(attendance.map(a => a.id === id ? { ...a, ...updates } : a));
+    setAttendance((prev) => prev.map(a => a.id === id ? { ...a, ...updates } : a));
   };
 
   const checkIn = (workerId: string, fecha: string) => {
@@ -289,6 +311,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         checkIn: timeString,
         checkOut: null,
         estado: 'Presente',
+        justificada: false,
       });
     }
   };
@@ -323,17 +346,28 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const generateUniqueId = (prefix: string) => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return `${prefix}-${crypto.randomUUID()}`;
+    }
+    return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  };
+
   // Payroll functions
   const addPayroll = (pay: Omit<Payroll, 'id'>) => {
-    const newPayroll: Payroll = {
-      ...pay,
-      id: `P-${Date.now()}`,
-    };
-    setPayroll([...payroll, newPayroll]);
+    setPayroll((prev) => {
+      const exists = prev.some(p => p.workerId === pay.workerId && p.mes === pay.mes && p.año === pay.año);
+      if (exists) return prev;
+      const newPayroll: Payroll = {
+        ...pay,
+        id: generateUniqueId('P'),
+      };
+      return [...prev, newPayroll];
+    });
   };
 
   const updatePayroll = (id: string, updates: Partial<Payroll>) => {
-    setPayroll(payroll.map(p => p.id === id ? { ...p, ...updates } : p));
+    setPayroll((prev) => prev.map(p => p.id === id ? { ...p, ...updates } : p));
   };
 
   const getPayrollByWorker = (workerId: string) => {
@@ -350,11 +384,11 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       ...medicina,
       id: `M-${Date.now()}`,
     };
-    setMedicamentos([...medicamentos, newMedicina]);
+    setMedicamentos((prev) => [...prev, newMedicina]);
   };
 
   const updateMedicina = (id: string, updates: Partial<Medicina>) => {
-    setMedicamentos(medicamentos.map(m => m.id === id ? { ...m, ...updates } : m));
+    setMedicamentos((prev) => prev.map(m => m.id === id ? { ...m, ...updates } : m));
   };
 
   const deleteMedicina = (id: string) => {
@@ -384,11 +418,11 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       ...insumo,
       id: `I-${Date.now()}`,
     };
-    setInsumos([...insumos, newInsumo]);
+    setInsumos((prev) => [...prev, newInsumo]);
   };
 
   const updateInsumo = (id: string, updates: Partial<Insumo>) => {
-    setInsumos(insumos.map(i => i.id === id ? { ...i, ...updates } : i));
+    setInsumos((prev) => prev.map(i => i.id === id ? { ...i, ...updates } : i));
   };
 
   const deleteInsumo = (id: string) => {
